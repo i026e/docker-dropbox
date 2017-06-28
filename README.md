@@ -34,6 +34,7 @@ You should see something like this:
 
 Any other command can be sent by replacing "dropbox" with "dropbox-docker".
 There is also a possibility to start shell session inside the container
+
     ./dropbox-docker bash
 
 ## ENV variables & Exposed volumes
