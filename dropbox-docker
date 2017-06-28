@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# https://hub.docker.com/r/janeczku/dropbox/
+# https://github.com/i026e/docker-dropbox
+
+########################################################################
+# Modify these
+
+# Pathes
+DROPBOX_FOLDER="${HOME}/Dropbox"
+ACCOUNT_FOLDER="${HOME}/.dropbox"
+
+# Limit Dropbox RAM usage
+MEMORY_LIMIT="300m"
+
+# Names
+DOCKER="i026e/dropbox"
+CONTAINER_NAME="dropbox"
+
+# Run Dropbox with a custom user id (matching the owner of the mounted files)
+DROPBOX_UID=${UID} #1000
+
+# Run Dropbox with a custom group id (matching the group of the mounted files)
+DROPBOX_GID=${GROUPS} #1000
+
+# Set this to "True" to skip updating to the latest Dropbox version on container start
+# Default: "False"
+DROPBOX_SKIP_UPDATE="False"
+
+########################################################################
+
+function change_path {
+    if [ "$1" ]; then
+        DROPBOX_FOLDER=${1}
+    fi
+
+    echo "Current path to Dropbox folder is '$DROPBOX_FOLDER'"
+    read -p "Do you wish to change it? y/N :" yn
+    case $yn in
+        [Yy]* ) read -p "Type new path: " DROPBOX_FOLDER
+                echo "Your Dropbox folder will be '$DROPBOX_FOLDER'"
+                ;;
+        * ) ;;
+    esac
+
+    mkdir -p ${DROPBOX_FOLDER}
+}
+
+function install {
+    docker build -t ${DOCKER} ./docker-dropbox
+    docker run -d   --restart=always \
+                    --name=${CONTAINER_NAME} \
+                    --net="host" \
+                    --memory=${MEMORY_LIMIT} \
+                    -v /tmp/.X11-unix:/tmp/.X11-unix \
+                    -v ${DROPBOX_FOLDER}:/dbox/Dropbox \
+                    -v ${ACCOUNT_FOLDER}:/dbox/.dropbox \
+                    -e XAUTHORITY=${XAUTHORITY} \
+                    -e DISPLAY=unix${DISPLAY} \
+                    -e DBOX_SKIP_UPDATE=${DROPBOX_SKIP_UPDATE} \
+                    -e DBOX_UID=${DROPBOX_UID} \
+                    -e DBOX_GID=${DROPBOX_GID} \
+            ${DOCKER}
+
+}
+
+
+case $1 in
+    bash)
+        docker exec -t -i ${CONTAINER_NAME} /bin/bash
+        ;;
+    install)
+        change_path ${2}
+        install
+        ;;
+    remove)
+        docker stop ${CONTAINER_NAME}
+        docker rm ${CONTAINER_NAME}
+        ;;
+    log)
+        #Check the logs of the container to get URL to authenticate with your Dropbox account
+        docker logs ${CONTAINER_NAME}
+        ;;
+    start)
+        docker start ${CONTAINER_NAME}
+        ;;
+    stop)
+        docker stop ${CONTAINER_NAME}
+        ;;
+    *)
+        #send command to dropbox
+        docker exec -t -i ${CONTAINER_NAME} dropbox ${@}
+        ;;
+
+esac
+
+
+
+
+
+

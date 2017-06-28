@@ -1,5 +1,5 @@
 FROM debian:jessie
-MAINTAINER Jan Broer <janeczku@yahoo.de>
+MAINTAINER Pavel Klevakin <klev.paul@gmail.com>
 ENV DEBIAN_FRONTEND noninteractive
 
 # Following 'How do I add or remove Dropbox from my Linux repository?' - https://www.dropbox.com/en/help/246
@@ -46,12 +46,13 @@ COPY run /root/
 COPY dropbox /usr/bin/dropbox
 
 # Install x11 dependencies
-RUN apt-get -qqy install libxxf86vm1 libxslt1.1 libqt5gui5
+RUN apt-get -qqy update \
+	&& apt-get -qqy install libxxf86vm1 libxslt1.1 libqt5gui5 \
+	&& apt-get -qqy autoclean
 
 # Set max number of files to watch
 RUN echo fs.inotify.max_user_watches=100000 >> /etc/sysctl.conf \
-	&& sysctl -p
-
+	&& echo fs.inotify.max_user_instances=256 >> /etc/sysctl.conf
 
 WORKDIR /dbox/Dropbox
 EXPOSE 17500
