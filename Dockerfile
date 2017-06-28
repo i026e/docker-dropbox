@@ -45,6 +45,14 @@ RUN mkdir -p /opt/dropbox \
 COPY run /root/
 COPY dropbox /usr/bin/dropbox
 
+# Install x11 dependencies
+RUN apt-get -qqy install libxxf86vm1 libxslt1.1 libqt5gui5
+
+# Set max number of files to watch
+RUN echo fs.inotify.max_user_watches=100000 >> /etc/sysctl.conf \
+	&& sysctl -p
+
+
 WORKDIR /dbox/Dropbox
 EXPOSE 17500
 VOLUME ["/dbox/.dropbox", "/dbox/Dropbox"]
